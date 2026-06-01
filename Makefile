@@ -8,7 +8,8 @@ ifneq ($(BREW_PREFIX),)
     LDFLAGS += -L$(BREW_PREFIX)/lib
 endif
 
-CXXFLAGS += -I. -Isciplot
+# sciplot больше не нужен, поэтому убираем -Isciplot
+# CXXFLAGS += -I. -Isciplot
 
 SRC = main.cpp
 TARGET = fitting
@@ -22,7 +23,6 @@ $(TARGET): $(SRC)
 
 clean:
 	rm -f $(TARGET) data_points.dat fit_line.dat plot.gp fit_output.png
-   	rm -f $(TARGET) data_points.dat fit_line.dat plot.gp fit_output.png fit_results.txt
 
 run: $(TARGET)
 	./$(TARGET) icecream.csv 1 0 1 50

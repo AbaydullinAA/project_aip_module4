@@ -5,13 +5,12 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <cstdio>
 
 extern "C" {
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_statistics_double.h>
 }
-
-#include "sciplot/sciplot.hpp"
 
 std::vector<std::string> split(const std::string &s, char delimiter) {
     std::vector<std::string> tokens;
@@ -102,44 +101,43 @@ int main(int argc, char* argv[]) {
                    &intercept, &slope, &cov00, &cov01, &cov11, &chi_squared);
     double r_value = gsl_stats_correlation(x.data(), 1, y.data(), 1, n);
 
-    // Вывод в консоль
     std::cout << "#### Линейная аппроксимация ####\n";
     std::cout << "Угловой коэффициент (m): " << slope << "\n";
     std::cout << "Пересечение (q): " << intercept << "\n";
     std::cout << "Коэффициент корреляции: " << r_value << std::endl;
-
-    // Сохранение результатов в текстовый файл
-    std::ofstream res_file("fit_results.txt");
-    res_file << "Угловой коэффициент (m): " << slope << "\n";
-    res_file << "Пересечение (q): " << intercept << "\n";
-    res_file << "Коэффициент корреляции: " << r_value << "\n";
-    res_file.close();
 
     auto [min_it, max_it] = std::minmax_element(x.begin(), x.end());
     double x_min = *min_it - 1.0;
     double x_max = *max_it + 1.0;
     double step = (x_max - x_min) / (N_points - 1);
 
-    std::vector<double> line_x, line_y;
+    // Генерируем данные для графика
+    std::ofstream data_file("data_points.dat");
+    for (size_t i = 0; i < n; ++i)
+        data_file << x[i] << "\t" << y[i] << "\n";
+    data_file.close();
+
+    std::ofstream line_file("fit_line.dat");
     for (unsigned int i = 0; i < N_points; ++i) {
         double cx = x_min + step * i;
-        line_x.push_back(cx);
-        line_y.push_back(intercept + slope * cx);
+        double cy = intercept + slope * cx;
+        line_file << cx << "\t" << cy << "\n";
     }
+    line_file.close();
 
-    // График через sciplot
-    sciplot::Plot2D plot;
-    plot.xlabel(x_label);
-    plot.ylabel(y_label);
-    plot.legend().atOutsideBottom();
-    plot.drawPoints(x, y).label("Data").pointType(7);
-    plot.drawCurve(line_x, line_y).label("Fit").lineWidth(2);
+    // Gnuplot скрипт
+    std::ofstream gp("plot.gp");
+    gp << "set terminal png size 800,600\n";
+    gp << "set output 'fit_output.png'\n";
+    gp << "set xlabel '" << x_label << "'\n";
+    gp << "set ylabel '" << y_label << "'\n";
+    gp << "set title 'Linear Fit'\n";
+    gp << "plot 'data_points.dat' using 1:2 with points pt 7 title 'Data', "
+          "'fit_line.dat' using 1:2 with lines lw 2 title 'Fit'\n";
+    gp.close();
 
-    plot.save("fit_output.png");
-    plot.show();
+    system("gnuplot -p plot.gp");
 
-    std::cout << "Результаты сохранены в fit_results.txt\n";
     std::cout << "График сохранён в fit_output.png\n";
-
     return 0;
 }
