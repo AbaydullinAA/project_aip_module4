@@ -8,13 +8,8 @@ ifneq ($(BREW_PREFIX),)
     LDFLAGS += -L$(BREW_PREFIX)/lib
 endif
 
-# sciplot больше не нужен, поэтому убираем -Isciplot
-# CXXFLAGS += -I. -Isciplot
-
 SRC = main.cpp
 TARGET = fitting
-
-.PHONY: all clean run
 
 all: $(TARGET)
 
