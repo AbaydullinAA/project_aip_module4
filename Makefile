@@ -22,6 +22,7 @@ $(TARGET): $(SRC)
 
 clean:
 	rm -f $(TARGET) data_points.dat fit_line.dat plot.gp fit_output.png
+   	rm -f $(TARGET) data_points.dat fit_line.dat plot.gp fit_output.png fit_results.txt
 
 run: $(TARGET)
 	./$(TARGET) icecream.csv 1 0 1 50
