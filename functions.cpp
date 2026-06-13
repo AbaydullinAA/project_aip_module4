@@ -4,50 +4,48 @@
 #include <sstream>
 #include <cstdlib>
 
-using namespace std;
-
-vector<string> split(const string &s, char delim) {
-    vector<string> result;
-    stringstream ss(s);
-    string item;
-    while (getline(ss, item, delim))
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> result;
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim))
         result.push_back(item);
     return result;
 }
 
-char detect_delimiter(const string &line) {
-    if (line.find('\t') != string::npos)
+char detect_delimiter(const std::string &line) {
+    if (line.find('\t') != std::string::npos)
         return '\t';
     return ',';
 }
 
-bool read_csv(const string &filename, int skip_rows, int col_x, int col_y,
-              vector<double> &x, vector<double> &y,
-              string &x_label, string &y_label) {
-    ifstream file(filename);
+bool read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
+              std::vector<double> &x, std::vector<double> &y,
+              std::string &x_label, std::string &y_label) {
+    std::ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка открытия файла: " << filename << endl;
+        std::cerr << "Ошибка открытия файла: " << filename << std::endl;
         return false;
     }
 
     x_label = "X";
     y_label = "Y";
 
-    string header_line;
-    if (getline(file, header_line)) {
+    std::string header_line;
+    if (std::getline(file, header_line)) {
         file.clear();
         file.seekg(0);
         char h_delim = detect_delimiter(header_line);
-        vector<string> headers = split(header_line, h_delim);
+        std::vector<std::string> headers = split(header_line, h_delim);
         if (col_x < (int)headers.size()) x_label = headers[col_x];
         if (col_y < (int)headers.size()) y_label = headers[col_y];
     }
 
-    string line;
+    std::string line;
     int row = 0;
     char delimiter = 0;
 
-    while (getline(file, line)) {
+    while (std::getline(file, line)) {
         if (row < skip_rows) {
             ++row;
             continue;
@@ -55,14 +53,14 @@ bool read_csv(const string &filename, int skip_rows, int col_x, int col_y,
         if (delimiter == 0)
             delimiter = detect_delimiter(line);
 
-        vector<string> tokens = split(line, delimiter);
-        if ((int)tokens.size() <= max(col_x, col_y)) {
+        std::vector<std::string> tokens = split(line, delimiter);
+        if ((int)tokens.size() <= std::max(col_x, col_y)) {
             ++row;
             continue;
         }
         try {
-            double xv = stod(tokens[col_x]);
-            double yv = stod(tokens[col_y]);
+            double xv = std::stod(tokens[col_x]);
+            double yv = std::stod(tokens[col_y]);
             x.push_back(xv);
             y.push_back(yv);
         } catch (...) {
@@ -72,15 +70,15 @@ bool read_csv(const string &filename, int skip_rows, int col_x, int col_y,
     file.close();
 
     if (x.size() < 2) {
-        cerr << "Недостаточно данных." << endl;
+        std::cerr << "Недостаточно данных." << std::endl;
         return false;
     }
     return true;
 }
 
-void write_plot_files(const vector<double> &x, const vector<double> &y,
+void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
                       double intercept, double slope, int N_points,
-                      const string &x_label, const string &y_label) {
+                      const std::string &x_label, const std::string &y_label) {
     int n = x.size();
 
     double min_x = x[0], max_x = x[0];
@@ -92,12 +90,12 @@ void write_plot_files(const vector<double> &x, const vector<double> &y,
     double x_max = max_x + 1.0;
     double step = (x_max - x_min) / (N_points - 1);
 
-    ofstream points_file("data_points.dat");
+    std::ofstream points_file("data_points.dat");
     for (int i = 0; i < n; ++i)
         points_file << x[i] << "\t" << y[i] << "\n";
     points_file.close();
 
-    ofstream line_file("fit_line.dat");
+    std::ofstream line_file("fit_line.dat");
     for (int i = 0; i < N_points; ++i) {
         double cx = x_min + step * i;
         double cy = intercept + slope * cx;
@@ -105,7 +103,7 @@ void write_plot_files(const vector<double> &x, const vector<double> &y,
     }
     line_file.close();
 
-    ofstream gp("plot.gp");
+    std::ofstream gp("plot.gp");
     gp << "set terminal png size 800,600\n";
     gp << "set output 'fit_output.png'\n";
     gp << "set xlabel '" << x_label << "'\n";
