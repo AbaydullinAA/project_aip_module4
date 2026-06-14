@@ -1,0 +1,11 @@
+build/
+data_points.dat
+fit_line.dat
+plot.gp
+fit_output.png
+fit_results.txt
+*.o
+.DS_Store
+.idea/
+fitting
+test_fitting

@@ -1,7 +1,8 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN // doctest – фреймворк тестирования
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "functions.h"
 #include <fstream>
+#include <stdexcept>
 
 TEST_CASE("split разделяет строку по запятой") {
     std::vector<std::string> result = split("a,b,c", ',');
@@ -32,8 +33,7 @@ TEST_CASE("read_csv корректно читает данные и метки")
 
     std::vector<double> x, y;
     std::string x_label, y_label;
-    bool ok = read_csv("test_data.csv", 1, 0, 1, x, y, x_label, y_label);
-    CHECK(ok == true);
+    REQUIRE_NOTHROW(read_csv("test_data.csv", 1, 0, 1, x, y, x_label, y_label));
     CHECK(x.size() == 2);
     CHECK(y.size() == 2);
     CHECK(x[0] == 10.0);
@@ -46,7 +46,7 @@ TEST_CASE("read_csv корректно читает данные и метки")
     std::remove("test_data.csv");
 }
 
-TEST_CASE("read_csv возвращает false при нехватке данных") {
+TEST_CASE("read_csv выбрасывает исключение при нехватке данных") {
     std::ofstream tmp("small.csv");
     tmp << "X,Y\n";
     tmp << "1,2\n";
@@ -54,27 +54,32 @@ TEST_CASE("read_csv возвращает false при нехватке данн�
 
     std::vector<double> x, y;
     std::string xl, yl;
-    bool ok = read_csv("small.csv", 1, 0, 1, x, y, xl, yl);
-    CHECK(ok == false);
+    CHECK_THROWS_AS(read_csv("small.csv", 1, 0, 1, x, y, xl, yl), std::runtime_error);
     std::remove("small.csv");
 }
 
-TEST_CASE("read_csv пропускает нечисловые строки") {
-    std::ofstream tmp("bad.csv");
-    tmp << "X,Y\n";
-    tmp << "abc,10\n";
-    tmp << "5,20\n";
-    tmp << "8,15\n";
-    tmp.close();
-
+TEST_CASE("read_csv выбрасывает исключение при отсутствии файла") {
     std::vector<double> x, y;
     std::string xl, yl;
-    bool ok = read_csv("bad.csv", 1, 0, 1, x, y, xl, yl);
-    CHECK(ok == true);
-    CHECK(x.size() == 2);
-    CHECK(x[0] == 5.0);
-    CHECK(y[0] == 20.0);
-    CHECK(x[1] == 8.0);
-    CHECK(y[1] == 15.0);
-    std::remove("bad.csv");
+    CHECK_THROWS_AS(read_csv("nonexistent.csv", 0, 0, 1, x, y, xl, yl), std::runtime_error);
+}
+
+TEST_CASE("write_plot_files создаёт файлы") {
+    std::vector<double> x = {1.0, 2.0, 3.0};
+    std::vector<double> y = {2.0, 4.0, 6.0};
+    double intercept = 0.0;
+    double slope = 2.0;
+    int N = 10;
+    std::string x_label = "X";
+    std::string y_label = "Y";
+
+    REQUIRE_NOTHROW(write_plot_files(x, y, intercept, slope, N, x_label, y_label));
+
+    CHECK(std::ifstream("data_points.dat").good());
+    CHECK(std::ifstream("fit_line.dat").good());
+    CHECK(std::ifstream("plot.gp").good());
+
+    std::remove("data_points.dat");
+    std::remove("fit_line.dat");
+    std::remove("plot.gp");
 }

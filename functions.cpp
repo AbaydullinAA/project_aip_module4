@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <stdexcept>
 
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> result;
@@ -19,13 +20,12 @@ char detect_delimiter(const std::string &line) {
     return ',';
 }
 
-bool read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
+void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
               std::vector<double> &x, std::vector<double> &y,
               std::string &x_label, std::string &y_label) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Ошибка открытия файла: " << filename << std::endl;
-        return false;
+        throw std::runtime_error("Ошибка открытия файла: " + filename);
     }
 
     x_label = "X";
@@ -70,10 +70,8 @@ bool read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
     file.close();
 
     if (x.size() < 2) {
-        std::cerr << "Недостаточно данных." << std::endl;
-        return false;
+        throw std::runtime_error("Недостаточно данных: нужно хотя бы 2 точки.");
     }
-    return true;
 }
 
 void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
@@ -115,5 +113,5 @@ void write_plot_files(const std::vector<double> &x, const std::vector<double> &y
 }
 
 void show_plot() {
-    system("gnuplot -p plot.gp"); // Gnuplot вызывается для построения графика
+    system("gnuplot -p plot.gp");
 }
