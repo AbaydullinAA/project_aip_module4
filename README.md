@@ -9,3 +9,4 @@
 brew install gsl gnuplot
 git clone --branch v1.2.1 --depth 1 https://github.com/sciplot/sciplot.git
 make
+./build/fitting icecream.csv 1 0 1 50
