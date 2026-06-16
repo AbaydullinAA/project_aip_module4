@@ -69,6 +69,23 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
  * @param x_label Подпись для оси X.
  * @param y_label Подпись для оси Y.
  */
+
+/**
+ * @brief Вычисляет линейную регрессию и коэффициент корреляции.
+ *
+ * Использует GSL для расчёта углового коэффициента (slope), свободного члена
+ * (intercept) и коэффициента корреляции Пирсона (r) по переданным векторам x и y.
+ *
+ * @param x Вектор X-координат точек.
+ * @param y Вектор Y-координат точек.
+ * @param[out] intercept Свободный член линейной аппроксимации.
+ * @param[out] slope Угловой коэффициент линейной аппроксимации.
+ * @param[out] r Коэффициент корреляции Пирсона.
+ * @throws std::runtime_error если количество точек меньше 2.
+ */
+void compute_linear_fit(const std::vector<double> &x, const std::vector<double> &y,
+                        double &intercept, double &slope, double &r);
+
 void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
                       double intercept, double slope, int N_points,
                       const std::string &x_label, const std::string &y_label);

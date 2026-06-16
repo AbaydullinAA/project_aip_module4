@@ -29,12 +29,8 @@ int main(int argc, char* argv[]) {
         std::string x_label, y_label;
         read_csv(filename, skip_rows, col_x, col_y, x, y, x_label, y_label);
 
-        int n = x.size();
-        double intercept, slope, cov00, cov01, cov11, chi_sq;
-        gsl_fit_linear(&x[0], 1, &y[0], 1, n,
-                       &intercept, &slope,
-                       &cov00, &cov01, &cov11, &chi_sq);
-        double r = gsl_stats_correlation(&x[0], 1, &y[0], 1, n);
+        double intercept, slope, r;
+        compute_linear_fit(x, y, intercept, slope, r);
 
         std::cout << "#### Линейная аппроксимация ####\n";
         std::cout << "Угловой коэффициент (m): " << slope << "\n";

@@ -5,6 +5,11 @@
 #include <cstdlib>
 #include <stdexcept>
 
+extern "C" {
+#include <gsl/gsl_fit.h>
+#include <gsl/gsl_statistics_double.h>
+}
+
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss(s);
@@ -74,10 +79,27 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
     }
 }
 
+void compute_linear_fit(const std::vector<double> &x, const std::vector<double> &y,
+                        double &intercept, double &slope, double &r) {
+    size_t n = x.size();
+    if (n < 2) {
+        throw std::runtime_error("Для линейной регрессии нужно минимум 2 точки.");
+    }
+    double cov00, cov01, cov11, chi_sq;
+    gsl_fit_linear(x.data(), 1, y.data(), 1, n,
+                   &intercept, &slope,
+                   &cov00, &cov01, &cov11, &chi_sq);
+    r = gsl_stats_correlation(x.data(), 1, y.data(), 1, n);
+}
+
+
 void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
                       double intercept, double slope, int N_points,
                       const std::string &x_label, const std::string &y_label) {
     int n = x.size();
+    if (N_points < 2) {
+        throw std::runtime_error("Количество точек для линии должно быть не менее 2.");
+    }
 
     double min_x = x[0], max_x = x[0];
     for (int i = 1; i < n; ++i) {

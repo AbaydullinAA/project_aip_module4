@@ -83,3 +83,13 @@ TEST_CASE("write_plot_files создаёт файлы") {
     std::remove("fit_line.dat");
     std::remove("plot.gp");
 }
+
+TEST_CASE("compute_linear_fit вычисляет коэффициенты") {
+    std::vector<double> x = {1.0, 2.0, 3.0};
+    std::vector<double> y = {2.0, 4.0, 6.0};
+    double intercept, slope, r;
+    REQUIRE_NOTHROW(compute_linear_fit(x, y, intercept, slope, r));
+    CHECK(slope == doctest::Approx(2.0));
+    CHECK(intercept == doctest::Approx(0.0));
+    CHECK(r == doctest::Approx(1.0));
+}
