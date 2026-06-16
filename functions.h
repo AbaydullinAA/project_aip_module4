@@ -53,6 +53,42 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
               std::string &x_label, std::string &y_label);
 
 /**
+ * @brief Проверяет корректность входных параметров программы.
+ *
+ * Проверяет, что номера столбцов неотрицательны, количество
+ * пропускаемых строк неотрицательно, количество точек >= 2,
+ * а столбцы X и Y не совпадают.
+ *
+ * @param skip_rows Количество строк для пропуска.
+ * @param col_x Индекс столбца X.
+ * @param col_y Индекс столбца Y.
+ * @param N_points Количество точек для линии.
+ * @throws std::invalid_argument если любой из параметров некорректен.
+ */
+void validate_inputs(int skip_rows, int col_x, int col_y, int N_points);
+
+/**
+ * @brief Выводит базовую статистику по данным.
+ *
+ * Печатает средние значения, дисперсии и диапазоны для X и Y.
+ *
+ * @param x Вектор X-координат.
+ * @param y Вектор Y-координат.
+ */
+void print_data_statistics(const std::vector<double> &x, const std::vector<double> &y);
+
+/**
+ * @brief Сохраняет отчёт о линейной регрессии в текстовый файл.
+ *
+ * @param filename Имя выходного файла.
+ * @param intercept Свободный член.
+ * @param slope Угловой коэффициент.
+ * @param r Коэффициент корреляции.
+ * @throws std::runtime_error если файл не удалось создать.
+ */
+void save_report(const std::string &filename, double intercept, double slope, double r);
+
+/**
  * @brief Записывает файлы данных и управляющий скрипт для Gnuplot.
  *
  * По переданным точкам и коэффициентам прямой создаются:
@@ -68,7 +104,11 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
  * @param N_points Количество точек, которое будет сгенерировано для линии.
  * @param x_label Подпись для оси X.
  * @param y_label Подпись для оси Y.
+ * @throws std::runtime_error если @p N_points меньше 2.
  */
+void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
+                      double intercept, double slope, int N_points,
+                      const std::string &x_label, const std::string &y_label);
 
 /**
  * @brief Вычисляет линейную регрессию и коэффициент корреляции.
@@ -85,10 +125,6 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
  */
 void compute_linear_fit(const std::vector<double> &x, const std::vector<double> &y,
                         double &intercept, double &slope, double &r);
-
-void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
-                      double intercept, double slope, int N_points,
-                      const std::string &x_label, const std::string &y_label);
 
 /**
  * @brief Запускает Gnuplot для отрисовки графика.

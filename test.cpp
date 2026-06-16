@@ -16,6 +16,11 @@ TEST_CASE("split разделяет строку по табуляции") {
     CHECK(result == expected);
 }
 
+TEST_CASE("split возвращает пустой вектор для пустой строки") {
+    std::vector<std::string> result = split("", ',');
+    CHECK(result.empty());
+}
+
 TEST_CASE("detect_delimiter находит табуляцию") {
     CHECK(detect_delimiter("a\tb") == '\t');
 }
@@ -84,6 +89,16 @@ TEST_CASE("write_plot_files создаёт файлы") {
     std::remove("plot.gp");
 }
 
+TEST_CASE("write_plot_files выбрасывает исключение при N_points < 2") {
+    std::vector<double> x = {1.0, 2.0};
+    std::vector<double> y = {2.0, 4.0};
+    double intercept = 0.0;
+    double slope = 1.0;
+    int N = 1;
+    std::string x_label = "X", y_label = "Y";
+    CHECK_THROWS_AS(write_plot_files(x, y, intercept, slope, N, x_label, y_label), std::runtime_error);
+}
+
 TEST_CASE("compute_linear_fit вычисляет коэффициенты") {
     std::vector<double> x = {1.0, 2.0, 3.0};
     std::vector<double> y = {2.0, 4.0, 6.0};
@@ -92,4 +107,47 @@ TEST_CASE("compute_linear_fit вычисляет коэффициенты") {
     CHECK(slope == doctest::Approx(2.0));
     CHECK(intercept == doctest::Approx(0.0));
     CHECK(r == doctest::Approx(1.0));
+}
+
+TEST_CASE("compute_linear_fit выбрасывает исключение при n < 2") {
+    std::vector<double> x = {1.0};
+    std::vector<double> y = {2.0};
+    double intercept, slope, r;
+    CHECK_THROWS_AS(compute_linear_fit(x, y, intercept, slope, r), std::runtime_error);
+}
+
+TEST_CASE("validate_inputs не выбрасывает исключений при корректных параметрах") {
+    REQUIRE_NOTHROW(validate_inputs(1, 0, 1, 50));
+}
+
+TEST_CASE("validate_inputs выбрасывает исключение при отрицательном skip_rows") {
+    CHECK_THROWS_AS(validate_inputs(-1, 0, 1, 50), std::invalid_argument);
+}
+
+TEST_CASE("validate_inputs выбрасывает исключение при отрицательном col_x") {
+    CHECK_THROWS_AS(validate_inputs(0, -1, 1, 50), std::invalid_argument);
+}
+
+TEST_CASE("validate_inputs выбрасывает исключение при отрицательном col_y") {
+    CHECK_THROWS_AS(validate_inputs(0, 0, -1, 50), std::invalid_argument);
+}
+
+TEST_CASE("validate_inputs выбрасывает исключение при col_x == col_y") {
+    CHECK_THROWS_AS(validate_inputs(0, 1, 1, 50), std::invalid_argument);
+}
+
+TEST_CASE("validate_inputs выбрасывает исключение при N_points < 2") {
+    CHECK_THROWS_AS(validate_inputs(0, 0, 1, 1), std::invalid_argument);
+}
+
+TEST_CASE("print_data_statistics корректно работает") {
+    std::vector<double> x = {1.0, 2.0, 3.0};
+    std::vector<double> y = {2.0, 4.0, 6.0};
+    CHECK_NOTHROW(print_data_statistics(x, y));
+}
+
+TEST_CASE("save_report успешно создает файл") {
+    REQUIRE_NOTHROW(save_report("test_report.txt", 0.0, 2.0, 1.0));
+    CHECK(std::ifstream("test_report.txt").good());
+    std::remove("test_report.txt");
 }

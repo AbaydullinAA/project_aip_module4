@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
+#include <algorithm>
 
 extern "C" {
 #include <gsl/gsl_fit.h>
@@ -25,12 +26,31 @@ char detect_delimiter(const std::string &line) {
     return ',';
 }
 
+void validate_inputs(int skip_rows, int col_x, int col_y, int N_points) {
+    if (skip_rows < 0)
+        throw std::invalid_argument("Количество пропускаемых строк не может быть отрицательным.");
+    if (col_x < 0)
+        throw std::invalid_argument("Индекс столбца X не может быть отрицательным.");
+    if (col_y < 0)
+        throw std::invalid_argument("Индекс столбца Y не может быть отрицательным.");
+    if (col_x == col_y)
+        throw std::invalid_argument("Столбцы X и Y не должны совпадать.");
+    if (N_points < 2)
+        throw std::invalid_argument("Количество точек для линии должно быть не менее 2.");
+    if (skip_rows > 10000)
+        throw std::invalid_argument("Количество пропускаемых строк подозрительно велико.");
+}
+
 void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
               std::vector<double> &x, std::vector<double> &y,
               std::string &x_label, std::string &y_label) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Ошибка открытия файла: " + filename);
+    }
+
+    if (file.peek() == std::ifstream::traits_type::eof()) {
+        throw std::runtime_error("Файл пуст: " + filename);
     }
 
     x_label = "X";
@@ -60,7 +80,6 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
 
         std::vector<std::string> tokens = split(line, delimiter);
         if ((int)tokens.size() <= std::max(col_x, col_y)) {
-            std::cerr << "Предупреждение: строка " << row << " пропущена (недостаточно столбцов)." << std::endl;
             ++row;
             continue;
         }
@@ -80,6 +99,48 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
     }
 }
 
+void print_data_statistics(const std::vector<double> &x, const std::vector<double> &y) {
+    if (x.empty() || y.empty()) return;
+    double sum_x = 0.0, sum_y = 0.0;
+    double min_x = x[0], max_x = x[0];
+    double min_y = y[0], max_y = y[0];
+    for (size_t i = 0; i < x.size(); ++i) {
+        sum_x += x[i];
+        sum_y += y[i];
+        if (x[i] < min_x) min_x = x[i];
+        if (x[i] > max_x) max_x = x[i];
+        if (y[i] < min_y) min_y = y[i];
+        if (y[i] > max_y) max_y = y[i];
+    }
+    double mean_x = sum_x / x.size();
+    double mean_y = sum_y / y.size();
+    double var_x = 0.0, var_y = 0.0;
+    for (size_t i = 0; i < x.size(); ++i) {
+        var_x += (x[i] - mean_x) * (x[i] - mean_x);
+        var_y += (y[i] - mean_y) * (y[i] - mean_y);
+    }
+    var_x /= x.size();
+    var_y /= y.size();
+    std::cout << "#### Статистика входных данных ####\n";
+    std::cout << "Среднее X: " << mean_x << ", Дисперсия X: " << var_x << "\n";
+    std::cout << "Среднее Y: " << mean_y << ", Дисперсия Y: " << var_y << "\n";
+    std::cout << "Диапазон X: [" << min_x << ", " << max_x << "]\n";
+    std::cout << "Диапазон Y: [" << min_y << ", " << max_y << "]\n\n";
+}
+
+void save_report(const std::string &filename, double intercept, double slope, double r) {
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Ошибка создания файла отчета: " + filename);
+    }
+    out << "#### Отчет по линейной аппроксимации ####\n";
+    out << "Угловой коэффициент (slope): " << slope << "\n";
+    out << "Пересечение (intercept): " << intercept << "\n";
+    out << "Коэффициент корреляции (r): " << r << "\n";
+    out << "Коэффициент детерминации (R^2): " << r * r << "\n";
+    out.close();
+}
+
 void compute_linear_fit(const std::vector<double> &x, const std::vector<double> &y,
                         double &intercept, double &slope, double &r) {
     size_t n = x.size();
@@ -92,7 +153,6 @@ void compute_linear_fit(const std::vector<double> &x, const std::vector<double> 
                    &cov00, &cov01, &cov11, &chi_sq);
     r = gsl_stats_correlation(x.data(), 1, y.data(), 1, n);
 }
-
 
 void write_plot_files(const std::vector<double> &x, const std::vector<double> &y,
                       double intercept, double slope, int N_points,
