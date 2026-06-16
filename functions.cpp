@@ -60,6 +60,7 @@ void read_csv(const std::string &filename, int skip_rows, int col_x, int col_y,
 
         std::vector<std::string> tokens = split(line, delimiter);
         if ((int)tokens.size() <= std::max(col_x, col_y)) {
+            std::cerr << "Предупреждение: строка " << row << " пропущена (недостаточно столбцов)." << std::endl;
             ++row;
             continue;
         }
